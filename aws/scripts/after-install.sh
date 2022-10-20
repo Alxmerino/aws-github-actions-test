@@ -6,4 +6,4 @@ aws s3 cp s3://am-github-actions-test-bucket/app.zip /usr/share/nginx/html/app.z
 
 cd /usr/share/nginx/html
 
-unzip app.zip
+unzip -o app.zip
