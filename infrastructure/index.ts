@@ -1,27 +1,40 @@
 import * as pulumi from '@pulumi/pulumi';
 import * as aws from '@pulumi/aws';
-import * as fs from "fs";
+import * as github from '@pulumi/github';
 
 import S3 from './s3'
-// import * as awsx from '@pulumi/awsx';
 
-const projectTag = 'gh-actions-test';
+const projectName = 'GHActionsTest';
 const tags = {
-  Project: projectTag
+  Project: projectName
 }
 const callerIdentity = pulumi.output(aws.getCallerIdentity({}));
 const callerPartition = pulumi.output(aws.getPartition());
 
-const S3Bucket = new S3(projectTag, {
-  projectTag
-})
+const S3Bucket = new S3(projectName, {
+  projectName
+});
+
+/**
+ * BEGIN GITHUB
+ */
+
+const secret = new github.ActionsSecret('aws-github-actions-secret', {
+  repository: 'aws-github-actions-test',
+  secretName: 'GH_ACTION_S3_BUCKET',
+  plaintextValue: S3Bucket.arn,
+});
+
+/**
+ * END GITHUB
+ */
 
 /**
  * BEGIN ROLES
  */
 const GHOpenIdConnectProvider = new aws.iam.OpenIdConnectProvider('GHOpenIDConnect', {
   clientIdLists: ['sts.amazonaws.com'],
-  thumbprintLists: [],
+  thumbprintLists: ['6938fd4d98bab03faadb97b34396831e3780aea1'],
   url: 'https://token.actions.githubusercontent.com',
 });
 
@@ -139,6 +152,8 @@ const GHActionCodeDeployRole = pulumi.all([callerPartition.partition, callerIden
   })
 })
 
+export const GHActionRoleArn = GHActionRole.arn;
+
 /**
  * END ROLES
  */
@@ -150,30 +165,30 @@ const ami = aws.ec2.getAmiOutput({
   mostRecent: true,
   filters: [
     {
-      name: "name",
-      values: ["amzn2-ami-kernel-*-x86_64-gp2"],
+      name: 'name',
+      values: ['amzn2-ami-kernel-*-x86_64-gp2'],
     },
   ],
-  owners: ["137112412989"],
+  owners: ['137112412989'],
 });
 
-const group = new aws.ec2.SecurityGroup(projectTag + "web-secgrp", {
+const group = new aws.ec2.SecurityGroup(projectName + 'web-secgrp', {
   ingress: [
-    {protocol: "tcp", fromPort: 22, toPort: 22, cidrBlocks: ["0.0.0.0/0"]},
-    {protocol: "tcp", fromPort: 80, toPort: 80, cidrBlocks: ["0.0.0.0/0"]},
+    {protocol: 'tcp', fromPort: 22, toPort: 22, cidrBlocks: ['0.0.0.0/0']},
+    {protocol: 'tcp', fromPort: 80, toPort: 80, cidrBlocks: ['0.0.0.0/0']},
   ],
   egress: [
-    {protocol: "-1", fromPort: 0, toPort: 0, cidrBlocks: ["0.0.0.0/0"],},
+    {protocol: '-1', fromPort: 0, toPort: 0, cidrBlocks: ['0.0.0.0/0']},
   ]
 });
 
 const userData =
-`#!/bin/bash
+  `#!/bin/bash
 sudo yum update -y
 sudo yum install ruby -y
 sudo yum install wget -y
 
-CODEDEPLOY_BIN="/opt/codedeploy-agent/bin/codedeploy-agent"
+CODEDEPLOY_BIN='/opt/codedeploy-agent/bin/codedeploy-agent'
 $CODEDEPLOY_BIN stop
 yum erase codedeploy-agent -y
 
@@ -184,18 +199,59 @@ sudo ./install auto
 sudo amazon-linux-extras install -y nginx1
 sudo service nginx start`;
 
-const server = new aws.ec2.Instance("web-server-www", {
-  tags: {"Name": "web-server-www"},
+const server = new aws.ec2.Instance(projectName, {
   instanceType: aws.ec2.InstanceType.T2_Micro, // t2.micro is available in the AWS free tier
   vpcSecurityGroupIds: [group.id], // reference the group object above
   ami: ami.id,
-  keyName: 'aws-amaya-media',
+  // @todo: Update this
+  // keyName: '',
   userData: userData,
-  // userData: Buffer.from(fs.readFileSync(`${path.module}/example.sh`), 'binary').toString('base64'),              // start a simple web server
+  // userData: Buffer.from(fs.readFileSync(`${path.module}/example.sh`), 'binary').toString('base64'),
+  tags: {
+    Name: projectName + '-www',
+    Project: projectName
+  },
 });
 
 export const publicIp = server.publicIp;
 export const publicHostName = server.publicDns;
 /**
  * END EC2 INSTANCE
+ */
+
+/**
+ * BEGIN CODE DEPLOY
+ */
+
+const CodeDeployApplication = new aws.codedeploy.Application(projectName, {
+  computePlatform: 'Server',
+});
+
+const exampleDeploymentGroup = new aws.codedeploy.DeploymentGroup(projectName + 'DeploymentGroup', {
+  appName: CodeDeployApplication.name,
+  deploymentGroupName: projectName + 'DeploymentGroup',
+  deploymentConfigName: 'CodeDeployDefault.AllAtOnce',
+  serviceRoleArn: GHActionCodeDeployRole.arn,
+  ec2TagSets: [{
+    ec2TagFilters: [
+      {
+        type: 'KEY_AND_VALUE',
+        key: 'Name',
+        value: projectName + '-www',
+      },
+      {
+        type: 'KEY_AND_VALUE',
+        key: 'Project',
+        value: projectName,
+      },
+    ],
+  }],
+  autoRollbackConfiguration: {
+    enabled: true,
+    events: ['DEPLOYMENT_FAILURE'],
+  },
+});
+
+/**
+ * END CODE DEPLOY
  */

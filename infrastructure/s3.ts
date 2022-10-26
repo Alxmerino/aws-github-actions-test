@@ -4,7 +4,7 @@ import * as pulumi from "@pulumi/pulumi";
 export default class S3 extends pulumi.ComponentResource {
   public readonly arn: pulumi.Output<string>;
 
-  constructor(name: string, args: any, opts?: pulumi.ComponentResourceOptions) {
+  constructor(name: string, args?: any, opts?: pulumi.ComponentResourceOptions) {
     super("custom:resource:S3", name, args, opts);
 
     const S3Bucket = new aws.s3.Bucket(name, {
@@ -13,8 +13,8 @@ export default class S3 extends pulumi.ComponentResource {
         enabled: true,
       },
       tags: {
-        Project: args.projectTag,
-        Name: args.projectTag,
+        Project: args?.projectTag,
+        Name: args?.projectTag,
       },
     });
 
