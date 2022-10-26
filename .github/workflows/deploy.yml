@@ -6,7 +6,9 @@ on:
 env:
   applicationfolder: app
   AWS_REGION: us-east-1
-  S3BUCKET: ghactionstest-6b0ade3
+  S3BUCKET: ${{ secrets.ACTION_AWS_S3_BUCKET }}
+  APPLICATION_NAME: ${{ secrets.ACTION_AWS_APPLICATION_NAME }}
+  DEPLOYMENT_GROUP: ${{ secrets.ACTION_AWS_DEPLOYMENT_GROUP }}
 
 
 jobs:
@@ -52,4 +54,4 @@ jobs:
     - run: |
         echo "Deploying branch ${{ env.GITHUB_REF }} to ${{ github.event.inputs.environment }}"
         commit_hash=`git rev-parse HEAD`
-        aws deploy create-deployment --application-name Test_Portfolio --deployment-group-name Test_Deployment_Group --github-location repository=$GITHUB_REPOSITORY,commitId=$commit_hash --ignore-application-stop-failures
+        aws deploy create-deployment --application-name ${{ env.APPLICATION_NAME }} --deployment-group-name ${{ env.DEPLOYMENT_GROUP }} --github-location repository=$GITHUB_REPOSITORY,commitId=$commit_hash --ignore-application-stop-failures

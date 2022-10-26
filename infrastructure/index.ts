@@ -16,22 +16,6 @@ const S3Bucket = new S3(projectName, {
 });
 
 /**
- * BEGIN GITHUB
- */
-
-const secret = new github.ActionsSecret('gh-actions-secret', {
-  repository: 'aws-github-actions-test',
-  secretName: 'ACTION_S3_BUCKET',
-  plaintextValue: S3Bucket.name,
-});
-
-export const S3BucketName = S3Bucket.name;
-
-/**
- * END GITHUB
- */
-
-/**
  * BEGIN ROLES
  */
 const GHOpenIdConnectProvider = new aws.iam.OpenIdConnectProvider('GHOpenIDConnect', {
@@ -229,7 +213,7 @@ const CodeDeployApplication = new aws.codedeploy.Application(projectName, {
   computePlatform: 'Server',
 });
 
-const exampleDeploymentGroup = new aws.codedeploy.DeploymentGroup(projectName + 'DeploymentGroup', {
+const CodeDeploymentGroup = new aws.codedeploy.DeploymentGroup(projectName + 'DeploymentGroup', {
   appName: CodeDeployApplication.name,
   deploymentGroupName: projectName + 'DeploymentGroup',
   deploymentConfigName: 'CodeDeployDefault.AllAtOnce',
@@ -256,4 +240,40 @@ const exampleDeploymentGroup = new aws.codedeploy.DeploymentGroup(projectName + 
 
 /**
  * END CODE DEPLOY
+ */
+
+/**
+ * BEGIN GITHUB
+ */
+
+const IAMSecret = new github.ActionsSecret('gh-actions-secret', {
+  repository: 'aws-github-actions-test',
+  secretName: 'IAMROLE_GITHUB',
+  plaintextValue: GHActionRoleArn,
+});
+
+const S3Secret = new github.ActionsSecret('gh-actions-secret', {
+  repository: 'aws-github-actions-test',
+  secretName: 'ACTION_AWS_S3_BUCKET',
+  plaintextValue: S3Bucket.name,
+});
+
+const ApplicationNameSecret = new github.ActionsSecret('gh-actions-secret', {
+  repository: 'aws-github-actions-test',
+  secretName: 'ACTION_AWS_APPLICATION_NAME',
+  plaintextValue: CodeDeployApplication.name,
+});
+
+const DeploymentGroupSecret = new github.ActionsSecret('gh-actions-secret', {
+  repository: 'aws-github-actions-test',
+  secretName: 'ACTION_AWS_DEPLOYMENT_GROUP',
+  plaintextValue: CodeDeploymentGroup.deploymentGroupName,
+});
+
+export const S3BucketName = S3Bucket.name;
+export const ApplicationName = CodeDeployApplication.name;
+export const DeploymentGroupName = CodeDeploymentGroup.deploymentGroupName;
+
+/**
+ * END GITHUB
  */
