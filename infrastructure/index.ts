@@ -246,25 +246,25 @@ const CodeDeploymentGroup = new aws.codedeploy.DeploymentGroup(projectName + 'De
  * BEGIN GITHUB
  */
 
-const IAMSecret = new github.ActionsSecret('gh-actions-secret', {
+const IAMSecret = new github.ActionsSecret('gh-actions-secret-iam', {
   repository: 'aws-github-actions-test',
   secretName: 'IAMROLE_GITHUB',
   plaintextValue: GHActionRoleArn,
 });
 
-const S3Secret = new github.ActionsSecret('gh-actions-secret', {
+const S3Secret = new github.ActionsSecret('gh-actions-secret-s3', {
   repository: 'aws-github-actions-test',
   secretName: 'ACTION_AWS_S3_BUCKET',
   plaintextValue: S3Bucket.name,
 });
 
-const ApplicationNameSecret = new github.ActionsSecret('gh-actions-secret', {
+const ApplicationNameSecret = new github.ActionsSecret('gh-actions-secret-app-name', {
   repository: 'aws-github-actions-test',
   secretName: 'ACTION_AWS_APPLICATION_NAME',
   plaintextValue: CodeDeployApplication.name,
 });
 
-const DeploymentGroupSecret = new github.ActionsSecret('gh-actions-secret', {
+const DeploymentGroupSecret = new github.ActionsSecret('gh-actions-secret-deploy-group-name', {
   repository: 'aws-github-actions-test',
   secretName: 'ACTION_AWS_DEPLOYMENT_GROUP',
   plaintextValue: CodeDeploymentGroup.deploymentGroupName,
