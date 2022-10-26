@@ -33,7 +33,7 @@ jobs:
           dest: app.zip
 
       - name: Upload Artifact to s3
-        run: aws s3 cp app.zip s3://${{ secrets.S3BUCKET }}/
+        run: aws s3 cp app.zip s3://"$secrets.S3BUCKET"/
 
   deploy:
     needs: build
