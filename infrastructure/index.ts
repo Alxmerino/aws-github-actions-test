@@ -19,11 +19,13 @@ const S3Bucket = new S3(projectName, {
  * BEGIN GITHUB
  */
 
-const secret = new github.ActionsSecret('aws-github-actions-secret', {
+const secret = new github.ActionsSecret('gh-actions-secret', {
   repository: 'aws-github-actions-test',
-  secretName: 'GH_ACTION_S3_BUCKET',
-  plaintextValue: S3Bucket.arn,
+  secretName: 'ACTION_S3_BUCKET',
+  plaintextValue: S3Bucket.name,
 });
+
+export const S3BucketName = S3Bucket.name;
 
 /**
  * END GITHUB
