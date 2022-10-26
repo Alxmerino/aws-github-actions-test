@@ -79,7 +79,7 @@ const GHActionRolePolicy = pulumi.all([S3Bucket.arn, callerPartition.partition, 
       }, {
         Action: ['s3:putObject'],
         Effect: 'Allow',
-        Resource: arn
+        Resource: `${arn}/*`
       }],
     })
   });
