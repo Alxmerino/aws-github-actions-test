@@ -6,7 +6,6 @@ on:
 env:
   applicationfolder: app
   AWS_REGION: us-east-1
-  S3BUCKET: ${{ secrets.ACTION_S3_BUCKET }}
 
 
 jobs:
@@ -33,7 +32,9 @@ jobs:
           dest: app.zip
 
       - name: Upload Artifact to s3
-        run: aws s3 cp app.zip s3://"$secrets:S3BUCKET"/
+        env:
+          S3BUCKET: ${{ secrets.ACTION_S3_BUCKET }}
+        run: aws s3 cp app.zip "s3://$env:S3BUCKET/"
 
   deploy:
     needs: build
