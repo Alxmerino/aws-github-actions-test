@@ -70,7 +70,7 @@ const GHActionRolePolicy = pulumi.all([S3Bucket.arn, callerPartition.partition, 
 });
 
 const GHActionEC2Role = S3Bucket.arn.apply(arn => {
-  new aws.iam.Role('GHActionEC2Role', {
+  return new aws.iam.Role('GHActionEC2Role', {
     assumeRolePolicy: JSON.stringify({
       Version: '2012-10-17',
       Statement: [{
@@ -89,9 +89,9 @@ const GHActionEC2Role = S3Bucket.arn.apply(arn => {
       policy: JSON.stringify({
         Version: '2012-10-17',
         Statement: [{
-          Action: ['s3:putObject'],
+          Action: ['s3:getObject'],
           Effect: 'Allow',
-          Resource: arn
+          Resource: `${arn}/*`
         }],
       })
     }],
@@ -100,6 +100,10 @@ const GHActionEC2Role = S3Bucket.arn.apply(arn => {
     ],
     tags
   });
+});
+
+const GHActionEC2InstanceProfile = new aws.iam.InstanceProfile("GHActionEC2InstanceProfile", {
+  role: GHActionEC2Role.name
 });
 
 const GHActionCodeDeployRole = pulumi.all([callerPartition.partition, callerIdentity.accountId]).apply(([partition, accountId]) => {
@@ -189,6 +193,7 @@ const server = new aws.ec2.Instance(projectName, {
   instanceType: aws.ec2.InstanceType.T2_Micro, // t2.micro is available in the AWS free tier
   vpcSecurityGroupIds: [group.id], // reference the group object above
   ami: ami.id,
+  iamInstanceProfile: GHActionEC2InstanceProfile,
   // @todo: Update this
   // keyName: '',
   userData: userData,
