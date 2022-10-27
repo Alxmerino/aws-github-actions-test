@@ -3,6 +3,8 @@ os: linux
 files:
   - source: /aws
     destination: /usr/local/codedeployresources
+  - source: /app
+    destination: /usr/share/nginx/html
 hooks:
   ApplicationStop:
     - location: aws/scripts/application-stop.sh
