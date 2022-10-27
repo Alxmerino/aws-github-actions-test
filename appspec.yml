@@ -5,6 +5,7 @@ files:
     destination: /usr/local/codedeployresources
   - source: /app
     destination: /usr/share/nginx/html
+file_exists_behavior: OVERWRITE
 hooks:
   ApplicationStop:
     - location: aws/scripts/application-stop.sh
