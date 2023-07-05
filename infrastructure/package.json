@@ -8,6 +8,6 @@
         "@pulumi/aws": "^5.0.0",
         "@pulumi/awsx": "^0.40.0",
         "@pulumi/github": "^5.0.0",
-        "@pulumi/pulumi": "^3.0.0"
+        "@pulumi/pulumi": "^3.74.0"
     }
 }
